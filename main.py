@@ -1,10 +1,14 @@
 import polars as pl
+from nltk.corpus import stopwords
+
+# Do not forget to call nltk.download("stopwords") on install
 
 tlsw = []
+ensw = stopwords.words('english')
 with open("./stopwords-tl.txt", "r") as raw_stopwords:
     tlsw.extend(raw_stopwords.read().split("\n"))
 
-print(tlsw)
+print(ensw)
 
 df = pl.read_csv("dataset.csv")
 
@@ -35,16 +39,16 @@ df = df.select([
     pl.col('Tweet').apply(lambda tweet: tweet.split()).cast(pl.List(str))
 ])
 
-# Strip tagalog stopwords
+# Strip tagalog and english stopwords
 df = df.select([
     pl.exclude("Tweet"),
-    pl.col("Tweet").arr.eval(pl.element().filter(~pl.element().is_in(tlsw)))
+    pl.col("Tweet").arr.eval(pl.element().filter(~pl.element().is_in(tlsw) & ~pl.element().is_in(ensw)), parallel=True)
 ])
 
 
 
 print(df)
-print(df.row(by_predicate=(pl.col("ID")==7)))
+print(df.row(by_predicate=(pl.col("ID")==3)))
 
 # df = df.select([
 #     pl.exclude("Tweet"),
